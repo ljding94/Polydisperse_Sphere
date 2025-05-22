@@ -1,0 +1,130 @@
+# ===================== System Parameters =====================
+#variable   pdType equal 3  # 1: uniform, 2: normal, 3: lognormal
+#variable    N     equal 0.5          # target number density (atoms per unit volume)
+#variable    sigma   equal 0.1          # standard deviation of diameters
+
+# input pdType, N, sigma, folder
+
+# reference different types of polydispersity:
+# https://www.sasview.org/docs/user/qtgui/Perspectives/Fitting/pd/polydispersity.html
+
+variable path string "${folder}/pdType_${pdType}_N_${N}_sigma_${sigma}"
+shell mkdir ${path}
+
+log ${path}/log.lammps
+
+variable n equal $N/8  # will rescale the box to half the size
+
+units		lj
+atom_style	sphere
+boundary    p p p
+dimension	3
+
+lattice		fcc $n
+region		box block -8 8 -8 8 -8 8
+#region		box block -4 4 -4 4 -4 4
+create_box	1 box
+create_atoms	1 box
+
+# Assign each atom a diameter ~ Normal(mean_d, sigma)
+# normal dsitribution, pd = sigma/x_mean, x_mean = 1.0
+#variable    diam    atom normal(1,${sigma},67890)
+
+# uniform dsitribution, pd = sigma/x_mean, x_mean = 1.0
+#variable    diam    atom random(1-${sigma},1+${sigma},67890)
+
+# lognormal dsitribution, pd = sigma/x_median, x_median = 1.0 -> mu = 0.0
+#variable z atom normal(0.0,${sigma},67890)
+#variable diam atom exp(v_z) # transform normal to lognormal
+variable seed equal 67890
+print "============================================================"
+#–– pick the diam definition based on pdType ––
+if "${pdType} == 1" then &
+    "variable diam atom random(1-${sigma},1+${sigma},${seed})" &
+    "print 'using uniform distribution' "
+
+if "${pdType} == 2" then &
+    "variable diam atom normal(1.0,${sigma},${seed})" &
+    "print 'using normal distribution' "
+
+if "${pdType} == 3" then &
+    "variable z    atom normal(0.0,${sigma},${seed})" &
+    "variable diam atom exp(v_z)" &
+    "print 'using lognormal distribution' "
+
+print "============================================================"
+
+#variable diam atom "${pdType}==1 ? uniform(1.0-${sigma},1.0+${sigma},67890) : ${pdType}==2 ? normal(1.0,${sigma},67890) : lognormal(1.0,${sigma},67890)"
+
+set         group all diameter v_diam
+
+# (Optional) Assign density so mass = density × volume_of_sphere
+set         group all density 1.0
+
+
+# interaction
+pair_style      lj/cut/sphere 1.0
+pair_modify     mix arithmetic shift yes
+pair_coeff      1 1 100.0
+
+pair_write 1 1 1000 r 0.5 10.0 ${path}/pair_coeff.txt LJ
+
+
+# =========== Reset============
+reset_timestep  0
+velocity        all create 1.0 67890 dist gaussian mom yes rot no
+thermo          100
+thermo_style    custom step temp pe etotal press
+
+
+# =========== Dumping =============
+#dump            traj all custom 100 dump.poly.lammpstrj id type x y z diameter
+#dump_modify     traj sort id
+
+# run simulation
+## equilibrate
+timestep      0.001
+thermo_style	custom step temp epair etotal press vol
+thermo		100
+
+
+# rescale the box to half the size
+variable s equal 1/2
+fix	1 all nve/limit 0.01
+run 10000
+unfix 1
+fix 2 all deform 1 x scale $s y scale $s z scale $s remap x
+fix 3 all nve/limit 0.01
+run 10000
+unfix 2
+unfix 3
+
+fix 4 all nve/limit 0.1
+run 10000
+unfix 4
+
+# -------------- Define NVT Thermostat ----------------
+# Applies to all subsequent runs until unfix
+#fix             nvt1   all nvt temp 1.0 1.0 1.0
+
+# ======== Stage 3: Near‐Hard “Hard‐Sphere” (ε=1.0) ========
+#pair_coeff      1 1 1.0
+#run             2000
+
+# ======== Stage 4: Full “Hard‐Sphere” (ε=100.0) ========
+#pair_coeff      1 1 100.0
+
+#velocity all create 1 1684651 dist gaussian
+velocity        all create 1.0 67890 dist gaussian mom yes rot no
+fix		5 all nvt temp 1 1 $(50.0*dt)
+run		5000
+
+reset_timestep 0
+
+#dump            traj all custom 100 dump.poly.lammpstrj id type x y z diameter
+#dump_modify     traj sort id
+
+#dump	    2 all custom 500 dump.*.txt id type x y z xu yu zu diameter
+dump	    2 all custom 500 ${path}/dump.*.txt id type x y z diameter
+dump_modify 2 flush yes pad 9
+run        50000

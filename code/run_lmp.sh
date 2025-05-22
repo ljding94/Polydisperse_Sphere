@@ -1,0 +1,1 @@
+lmp_serial -in prec_pdsphere.lammps -var pdType 2 -var N 0.30 -var sigma 0.10 -var folder "/Users/ldq/Work/Polydisperse_Sphere/data"

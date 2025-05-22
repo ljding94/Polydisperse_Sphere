@@ -1,0 +1,21 @@
+LAMMPS (29 Aug 2024 - Update 1)
+# ===================== System Parameters =====================
+#variable   pdType equal 3  # 1: uniform, 2: normal, 3: lognormal
+#variable    N     equal 0.5          # target number density (atoms per unit volume)
+#variable    sigma   equal 0.1          # standard deviation of diameters
+
+# input pdType, N, sigma, folder
+
+# reference different types of polydispersity:
+# https://www.sasview.org/docs/user/qtgui/Perspectives/Fitting/pd/polydispersity.html
+
+variable path string "${folder}/pdType_${pdType}_N_${N}_sigma_${sigma}"
+/Users/ldq/Work/Polydisperse_Sphere/data/pdType_${pdType}_N_${N}_sigma_${sigma}
+/Users/ldq/Work/Polydisperse_Sphere/data/pdType_2_N_${N}_sigma_${sigma}
+/Users/ldq/Work/Polydisperse_Sphere/data/pdType_2_N_0.70_sigma_${sigma}
+/Users/ldq/Work/Polydisperse_Sphere/data/pdType_2_N_0.70_sigma_0.10
+shell mkdir ${path}
+shell mkdir /Users/ldq/Work/Polydisperse_Sphere/data/pdType_2_N_0.70_sigma_0.10
+
+log ${path}/log.lammps
+log /Users/ldq/Work/Polydisperse_Sphere/data/pdType_2_N_0.70_sigma_0.10/log.lammps
