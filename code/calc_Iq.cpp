@@ -116,7 +116,7 @@ std::vector<double> calc_Iq(std::vector<Atom> atoms, std::vector<double> q_vec, 
     for (size_t i = 0; i < atoms.size(); ++i)
     {
         V[i] = (M_PI / 6.0) * std::pow(atoms[i].diam, 3);
-        sum_V2 += V[i]*V[i];
+        sum_V2 += V[i] * V[i];
     }
 
     // Initialize the accumulators for the real and imaginary parts.
@@ -144,7 +144,7 @@ std::vector<double> calc_Iq(std::vector<Atom> atoms, std::vector<double> q_vec, 
                     A_Re_q_theta_phi[iq][itheta][iphi] += V[i] * Pq[i][iq] * std::cos(phase);
                     A_Im_q_theta_phi[iq][itheta][iphi] += V[i] * Pq[i][iq] * std::sin(phase);
                 }
-                I_q_theta_phi[iq][itheta][iphi] = (A_Re_q_theta_phi[iq][itheta][iphi] * A_Re_q_theta_phi[iq][itheta][iphi] + A_Im_q_theta_phi[iq][itheta][iphi] * A_Im_q_theta_phi[iq][itheta][iphi])/(sum_V2);
+                I_q_theta_phi[iq][itheta][iphi] = (A_Re_q_theta_phi[iq][itheta][iphi] * A_Re_q_theta_phi[iq][itheta][iphi] + A_Im_q_theta_phi[iq][itheta][iphi] * A_Im_q_theta_phi[iq][itheta][iphi]) / (sum_V2);
             }
         }
     }
@@ -156,9 +156,9 @@ std::vector<double> calc_Iq(std::vector<Atom> atoms, std::vector<double> q_vec, 
         {
             for (size_t iq = 0; iq < q_vec.size(); ++iq)
             {
-                Iq_vals[iq] += I_q_theta_phi[iq][itheta][iphi]/(N_theta * N_phi); // average over theta and phi
+                Iq_vals[iq] += I_q_theta_phi[iq][itheta][iphi] / (N_theta * N_phi); // average over theta and phi
                 // no need to sin(qtheta_vals[itheta]) here, because we have uniform cos(theta)
-                //Iq_vals[iq] += I_q_theta_phi[iq][itheta][iphi]*std::sin(qtheta_vals[itheta])/(N_theta * N_phi); // average over theta and phi
+                // Iq_vals[iq] += I_q_theta_phi[iq][itheta][iphi]*std::sin(qtheta_vals[itheta])/(N_theta * N_phi); // average over theta and phi
             }
         }
     }
@@ -230,7 +230,7 @@ void save_Iq(const std::string &filename, const std::vector<double> &q_vec, cons
         ofs << "," << q_vec[i];
     }
     ofs << "\n";
-    ofs << "S(q)";
+    ofs << "I(q)";
     // Write S(q) values in one row
     for (size_t i = 0; i < avg_Iq.size(); ++i)
     {
@@ -238,22 +238,26 @@ void save_Iq(const std::string &filename, const std::vector<double> &q_vec, cons
     }
 
     ofs.close();
-    std::cout << "Averaged S(q) saved to " << filename << std::endl;
+    std::cout << "Averaged I(q) saved to " << filename << std::endl;
 }
 // Function 1: main
 // Takes the input path (folder) as argument, constructs a q vector, calculates the average S(q),
 // and then saves the averaged S(q) and q vector to an output file in the folder.
 int main(int argc, char *argv[])
 {
-    if (argc != 2)
+    if (argc != 5)
     {
-        std::cerr << "Usage: " << argv[0] << " <folder_path>\n";
+        std::cerr << "Usage: " << argv[0] << " <pdType> " << argv[1] << "<N>" << argv[2] << "<sigma>" << argv[3] << "<N>" << std::endl;
         return 1;
     }
-    std::string folder_path = argv[1];
+    int pdType = std::stoi(argv[1]);
+    double N = std::stod(argv[2]);     // this is a double
+    double sigma = std::stod(argv[3]); // this is a double
+    std::string folder_path = argv[4];
 
-    std::string save_file = folder_path + "/Iq" + ".csv";
-    std::string dump_folder = folder_path;
+    std::string finfo = "/pdType_" + std::string(argv[1]) + "_N_" + std::string(argv[2]) + "_sigma_" + std::string(argv[3]);
+    std::string save_file = folder_path + finfo  + "_Iq.csv";
+    std::string dump_folder = folder_path + finfo;
 
     // Start timer.
     auto start_time = std::chrono::steady_clock::now();
@@ -268,7 +272,7 @@ int main(int argc, char *argv[])
     double qf = 13e0;
     for (int k = 0; k < num_q; k++)
     {
-        //q_vec[k] = qi * std::pow(qf / qi, 1.0 * k / (num_q - 1)); // uniform in log scale;
+        // q_vec[k] = qi * std::pow(qf / qi, 1.0 * k / (num_q - 1)); // uniform in log scale;
         q_vec[k] = qi + (qf - qi) * k / (num_q - 1); // uniform in linear scale
     }
 
