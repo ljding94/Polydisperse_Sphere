@@ -60,28 +60,28 @@ std::vector<Atom> read_atom_positions(const std::string &dump_file)
     }
     return atoms;
 }
-// function 2: calc Pq
-std::vector<double> calc_Pq(Atom atom, std::vector<double> q_vec)
+// function 2: calc Fq
+std::vector<double> calc_Fq(Atom atom, std::vector<double> q_vec)
 {
-    std::vector<double> Pq(q_vec.size(), 0.0);
+    std::vector<double> Fq(q_vec.size(), 0.0);
     // radius = diam * 0.5
-    // Pq = 3 * (np.sin(q * radius) - q * radius * np.cos(q * radius)) / (q * radius) ** 3
-    // return Pq
+    // Fq = 3 * (np.sin(q * radius) - q * radius * np.cos(q * radius)) / (q * radius) ** 3
+    // return Fq
     double radius = atom.diam * 0.5;
     for (size_t i = 0; i < q_vec.size(); ++i)
     {
         double q = q_vec[i];
         if (q == 0.0)
         {
-            Pq[i] = 1.0; // j0(0) = 1
+            Fq[i] = 1.0; // j0(0) = 1
         }
         else
         {
             double qr = q * radius;
-            Pq[i] = (3.0 * (std::sin(qr) - qr * std::cos(qr))) / (qr * qr * qr);
+            Fq[i] = (3.0 * (std::sin(qr) - qr * std::cos(qr))) / (qr * qr * qr);
         }
     }
-    return Pq;
+    return Fq;
 }
 
 // Function 3: calc_Iq
@@ -90,11 +90,11 @@ std::vector<double> calc_Pq(Atom atom, std::vector<double> q_vec)
 // Returns a vector of S(q) values (one for each q in q_vec).
 std::vector<double> calc_Iq(std::vector<Atom> atoms, std::vector<double> q_vec, int N_theta, int N_phi)
 {
-    // 1, find Pq for each atom
-    std::vector<std::vector<double>> Pq(atoms.size());
+    // 1, find Fq for each atom
+    std::vector<std::vector<double>> Fq(atoms.size());
     for (int i = 0; i < atoms.size(); ++i)
     {
-        Pq[i] = calc_Pq(atoms[i], q_vec);
+        Fq[i] = calc_Fq(atoms[i], q_vec);
     }
 
     // Compute theta and phi values.
@@ -141,8 +141,8 @@ std::vector<double> calc_Iq(std::vector<Atom> atoms, std::vector<double> q_vec, 
                 for (size_t i = 0; i < atoms.size(); ++i)
                 {
                     double phase = qx * atoms[i].x + qy * atoms[i].y + qz * atoms[i].z;
-                    A_Re_q_theta_phi[iq][itheta][iphi] += V[i] * Pq[i][iq] * std::cos(phase);
-                    A_Im_q_theta_phi[iq][itheta][iphi] += V[i] * Pq[i][iq] * std::sin(phase);
+                    A_Re_q_theta_phi[iq][itheta][iphi] += V[i] * Fq[i][iq] * std::cos(phase);
+                    A_Im_q_theta_phi[iq][itheta][iphi] += V[i] * Fq[i][iq] * std::sin(phase);
                 }
                 I_q_theta_phi[iq][itheta][iphi] = (A_Re_q_theta_phi[iq][itheta][iphi] * A_Re_q_theta_phi[iq][itheta][iphi] + A_Im_q_theta_phi[iq][itheta][iphi] * A_Im_q_theta_phi[iq][itheta][iphi]) / (sum_V2);
             }
@@ -264,12 +264,12 @@ int main(int argc, char *argv[])
 
     // Define a q vector (for example, from 0.1 to 15.0 in 3 points on a log scale)
     int num_q = 100;
-    int N_theta = 30;
-    int N_phi = 60;
+    int N_theta = 50;
+    int N_phi = 100;
     std::vector<double> q_vec(num_q);
     // double qi = 1e-2;
-    double qi = 2e-1;
-    double qf = 13e0;
+    double qi = 0;
+    double qf = 15e0;
     for (int k = 0; k < num_q; k++)
     {
         // q_vec[k] = qi * std::pow(qf / qi, 1.0 * k / (num_q - 1)); // uniform in log scale;

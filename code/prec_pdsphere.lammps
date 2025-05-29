@@ -8,12 +8,13 @@
 # reference different types of polydispersity:
 # https://www.sasview.org/docs/user/qtgui/Perspectives/Fitting/pd/polydispersity.html
 
-variable path string "${folder}/pdType_${pdType}_N_${N}_sigma_${sigma}"
+variable path string "${folder}/L_${L}_pdType_${pdType}_N_${N}_sigma_${sigma}"
 shell mkdir ${path}
 
 log ${path}/log.lammps
 
 variable n equal $N/8  # will rescale the box to half the size
+
 
 units		lj
 atom_style	sphere
@@ -21,7 +22,8 @@ boundary    p p p
 dimension	3
 
 lattice		fcc $n
-region		box block -8 8 -8 8 -8 8
+region		box block 0 $L 0 $L 0 $L
+#region		box block -8 8 -8 8 -8 8
 #region		box block -4 4 -4 4 -4 4
 create_box	1 box
 create_atoms	1 box
@@ -117,7 +119,7 @@ unfix 4
 #velocity all create 1 1684651 dist gaussian
 velocity        all create 1.0 67890 dist gaussian mom yes rot no
 fix		5 all nvt temp 1 1 $(50.0*dt)
-run		5000
+run		10000
 
 reset_timestep 0
 
@@ -125,6 +127,6 @@ reset_timestep 0
 #dump_modify     traj sort id
 
 #dump	    2 all custom 500 dump.*.txt id type x y z xu yu zu diameter
-dump	    2 all custom 500 ${path}/dump.*.txt id type x y z diameter
+dump	    2 all custom 1000 ${path}/dump.*.txt id type x y z diameter
 dump_modify 2 flush yes pad 9
-run        50000
+run        100000

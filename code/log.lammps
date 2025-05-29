@@ -9,13 +9,14 @@ LAMMPS (29 Aug 2024 - Update 1)
 # reference different types of polydispersity:
 # https://www.sasview.org/docs/user/qtgui/Perspectives/Fitting/pd/polydispersity.html
 
-variable path string "${folder}/pdType_${pdType}_N_${N}_sigma_${sigma}"
-/Users/ldq/Work/Polydisperse_Sphere/data/pdType_${pdType}_N_${N}_sigma_${sigma}
-/Users/ldq/Work/Polydisperse_Sphere/data/pdType_2_N_${N}_sigma_${sigma}
-/Users/ldq/Work/Polydisperse_Sphere/data/pdType_2_N_0.70_sigma_${sigma}
-/Users/ldq/Work/Polydisperse_Sphere/data/pdType_2_N_0.70_sigma_0.10
+variable path string "${folder}/L_${L}_pdType_${pdType}_N_${N}_sigma_${sigma}"
+/Users/ldq/Work/Polydisperse_Sphere/data_local/L_${L}_pdType_${pdType}_N_${N}_sigma_${sigma}
+/Users/ldq/Work/Polydisperse_Sphere/data_local/L_16_pdType_${pdType}_N_${N}_sigma_${sigma}
+/Users/ldq/Work/Polydisperse_Sphere/data_local/L_16_pdType_2_N_${N}_sigma_${sigma}
+/Users/ldq/Work/Polydisperse_Sphere/data_local/L_16_pdType_2_N_0.30_sigma_${sigma}
+/Users/ldq/Work/Polydisperse_Sphere/data_local/L_16_pdType_2_N_0.30_sigma_0.10
 shell mkdir ${path}
-shell mkdir /Users/ldq/Work/Polydisperse_Sphere/data/pdType_2_N_0.70_sigma_0.10
+shell mkdir /Users/ldq/Work/Polydisperse_Sphere/data_local/L_16_pdType_2_N_0.30_sigma_0.10
 
 log ${path}/log.lammps
-log /Users/ldq/Work/Polydisperse_Sphere/data/pdType_2_N_0.70_sigma_0.10/log.lammps
+log /Users/ldq/Work/Polydisperse_Sphere/data_local/L_16_pdType_2_N_0.30_sigma_0.10/log.lammps
