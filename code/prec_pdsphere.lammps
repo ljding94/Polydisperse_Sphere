@@ -66,10 +66,11 @@ set         group all density 1.0
 
 # interaction
 pair_style      lj/cut/sphere 1.0
+pair_coeff      * * 100.0
 pair_modify     mix arithmetic shift yes
-pair_coeff      1 1 100.0
-
-pair_write 1 1 1000 r 0.5 10.0 ${path}/pair_coeff.txt LJ
+#pair_modify shift yes
+shell rm ${path}/pair_coeff.txt       # prevent appending old data
+pair_write 1 1 200 r 0.5 2.0 ${path}/pair_coeff.txt LJ
 
 
 # =========== Reset============
@@ -127,6 +128,6 @@ reset_timestep 0
 #dump_modify     traj sort id
 
 #dump	    2 all custom 500 dump.*.txt id type x y z xu yu zu diameter
-dump	    2 all custom 1000 ${path}/dump.*.txt id type x y z diameter
+dump	    2 all custom 10000 ${path}/dump.*.txt id type x y z diameter
 dump_modify 2 flush yes pad 9
 run        100000

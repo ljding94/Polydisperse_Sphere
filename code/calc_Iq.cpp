@@ -245,17 +245,18 @@ void save_Iq(const std::string &filename, const std::vector<double> &q_vec, cons
 // and then saves the averaged S(q) and q vector to an output file in the folder.
 int main(int argc, char *argv[])
 {
-    if (argc != 5)
+    if (argc != 6)
     {
         std::cerr << "Usage: " << argv[0] << " <pdType> " << argv[1] << "<N>" << argv[2] << "<sigma>" << argv[3] << "<N>" << std::endl;
         return 1;
     }
-    int pdType = std::stoi(argv[1]);
-    double N = std::stod(argv[2]);     // this is a double
-    double sigma = std::stod(argv[3]); // this is a double
-    std::string folder_path = argv[4];
+    int L = std::stoi(argv[1]);
+    int pdType = std::stoi(argv[2]);
+    double N = std::stod(argv[3]);     // this is a double
+    double sigma = std::stod(argv[4]); // this is a double
+    std::string folder_path = argv[5];
 
-    std::string finfo = "/pdType_" + std::string(argv[1]) + "_N_" + std::string(argv[2]) + "_sigma_" + std::string(argv[3]);
+    std::string finfo = "/L_" + std::string(argv[1]) + "_pdType_" + std::string(argv[2]) + "_N_" + std::string(argv[3]) + "_sigma_" + std::string(argv[4]);
     std::string save_file = folder_path + finfo  + "_Iq.csv";
     std::string dump_folder = folder_path + finfo;
 

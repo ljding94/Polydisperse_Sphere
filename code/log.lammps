@@ -11,12 +11,12 @@ LAMMPS (29 Aug 2024 - Update 1)
 
 variable path string "${folder}/L_${L}_pdType_${pdType}_N_${N}_sigma_${sigma}"
 /Users/ldq/Work/Polydisperse_Sphere/data_local/L_${L}_pdType_${pdType}_N_${N}_sigma_${sigma}
-/Users/ldq/Work/Polydisperse_Sphere/data_local/L_16_pdType_${pdType}_N_${N}_sigma_${sigma}
-/Users/ldq/Work/Polydisperse_Sphere/data_local/L_16_pdType_2_N_${N}_sigma_${sigma}
-/Users/ldq/Work/Polydisperse_Sphere/data_local/L_16_pdType_2_N_0.30_sigma_${sigma}
-/Users/ldq/Work/Polydisperse_Sphere/data_local/L_16_pdType_2_N_0.30_sigma_0.10
+/Users/ldq/Work/Polydisperse_Sphere/data_local/L_5_pdType_${pdType}_N_${N}_sigma_${sigma}
+/Users/ldq/Work/Polydisperse_Sphere/data_local/L_5_pdType_2_N_${N}_sigma_${sigma}
+/Users/ldq/Work/Polydisperse_Sphere/data_local/L_5_pdType_2_N_0.10_sigma_${sigma}
+/Users/ldq/Work/Polydisperse_Sphere/data_local/L_5_pdType_2_N_0.10_sigma_0.00
 shell mkdir ${path}
-shell mkdir /Users/ldq/Work/Polydisperse_Sphere/data_local/L_16_pdType_2_N_0.30_sigma_0.10
+shell mkdir /Users/ldq/Work/Polydisperse_Sphere/data_local/L_5_pdType_2_N_0.10_sigma_0.00
 
 log ${path}/log.lammps
-log /Users/ldq/Work/Polydisperse_Sphere/data_local/L_16_pdType_2_N_0.30_sigma_0.10/log.lammps
+log /Users/ldq/Work/Polydisperse_Sphere/data_local/L_5_pdType_2_N_0.10_sigma_0.00/log.lammps
