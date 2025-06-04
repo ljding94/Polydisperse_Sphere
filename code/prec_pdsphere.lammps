@@ -128,6 +128,6 @@ reset_timestep 0
 #dump_modify     traj sort id
 
 #dump	    2 all custom 500 dump.*.txt id type x y z xu yu zu diameter
-dump	    2 all custom 10000 ${path}/dump.*.txt id type x y z diameter
+dump	    2 all custom 1000 ${path}/dump.*.txt id type x y z diameter
 dump_modify 2 flush yes pad 9
 run        100000

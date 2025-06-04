@@ -16,7 +16,7 @@ struct Atom
 };
 
 // Function 1: read_atom_positions
-std::vector<Atom> read_atom_positions(const std::string &dump_file)
+std::vector<Atom> read_atom_positions(std::string mode, const std::string &dump_file)
 {
     std::vector<Atom> atoms;
     std::ifstream infile(dump_file);
@@ -43,11 +43,15 @@ std::vector<Atom> read_atom_positions(const std::string &dump_file)
         {
             std::istringstream iss(line);
             int id, type;
-            double x, y, z, diam;
+            double x, y, z, diam, N, sigma;
             // Now expect: id, type, x, y, z, diam (and ignore the rest if present).
-            if (!(iss >> id >> type >> x >> y >> z >> diam))
+            if (mode == "prec" && !(iss >> id >> type >> x >> y >> z >> diam))
             {
                 // Skip lines that don't match the expected format.
+                continue;
+            }
+            else if (mode == "rand" && !(iss >> id >> type >> x >> y >> z >> diam >> N >> sigma))
+            {
                 continue;
             }
             atoms.push_back({x, y, z, diam});
@@ -60,6 +64,52 @@ std::vector<Atom> read_atom_positions(const std::string &dump_file)
     }
     return atoms;
 }
+
+std::vector<double> read_N_sigma_val(const std::string &dump_file)
+{
+    std::vector<double> N_sigma_vec(2, -1.0); // Initialize with -1.0 to indicate error
+    std::ifstream infile(dump_file);
+    if (!infile)
+    {
+        std::cerr << "Error opening file: " << dump_file << std::endl;
+        return N_sigma_vec;
+    }
+    std::cout<<"reading N and sigma from: "<<dump_file<<std::endl;
+
+    std::string line;
+    bool reading_atoms = false;
+
+    while (std::getline(infile, line))
+    {
+        // Look for the header that indicates the start of atom data.
+        if (line.find("ITEM: ATOMS") != std::string::npos)
+        {
+            reading_atoms = true;
+            continue;
+        }
+
+        // Once the header is found, read each subsequent line as an atom's data.
+        if (reading_atoms)
+        {
+            std::istringstream iss(line);
+            int id, type;
+            double x, y, z, diam, N, sigma;
+            // Now expect: id, type, x, y, z, diam (and ignore the rest if present).
+            if (!(iss >> id >> type >> x >> y >> z >> diam >> N >> sigma))
+            {
+                // Skip lines that don't match the expected format.
+                continue;
+            }
+            // Store N and sigma values in the vector.
+            N_sigma_vec[0] = N;     // Set N
+            N_sigma_vec[1] = sigma; // Set sigma
+            std::cout << "N: " << N_sigma_vec[0] << ", sigma: " << N_sigma_vec[1] << std::endl;
+            return N_sigma_vec;     // Return immediately after reading the first atom
+        }
+    }
+    return N_sigma_vec; // Return the vector with -1.0 if no valid data was found
+}
+
 // function 2: calc Fq
 std::vector<double> calc_Fq(Atom atom, std::vector<double> q_vec)
 {
@@ -166,7 +216,7 @@ std::vector<double> calc_Iq(std::vector<Atom> atoms, std::vector<double> q_vec, 
 }
 // Function 4: find dump-by-dump average Iq
 
-std::vector<double> calc_average_Iq(const std::string &folder_path, const std::vector<double> &q_vec, int N_theta, int N_phi)
+std::vector<double> calc_average_Iq(std::string mode, const std::string &folder_path, const std::vector<double> &q_vec, int N_theta, int N_phi)
 {
     std::vector<double> avg_Iq(q_vec.size(), 0.0);
     int file_count = 0;
@@ -184,7 +234,7 @@ std::vector<double> calc_average_Iq(const std::string &folder_path, const std::v
             {
                 std::cout << "Processed file: " << filename << std::endl;
                 std::string full_path = entry.path().string();
-                std::vector<Atom> atoms = read_atom_positions(full_path);
+                std::vector<Atom> atoms = read_atom_positions(mode, full_path);
                 std::vector<double> file_Iq = calc_Iq(atoms, q_vec, N_theta, N_phi);
                 // Check for error indicator (here if first value is -1.0, we skip)
                 if (!file_Iq.empty() && file_Iq[0] < 0.0)
@@ -213,7 +263,7 @@ std::vector<double> calc_average_Iq(const std::string &folder_path, const std::v
 
 // Function 4: save_Iq
 // Given a folder path, a q vector, and the averaged S(q) vector, save the data to an output file in the folder.
-void save_Iq(const std::string &filename, const std::vector<double> &q_vec, const std::vector<double> &avg_Iq)
+void save_Iq(const std::string &filename, const std::vector<double> &q_vec, const std::vector<double> &avg_Iq, int L, int pdType, double N, double sigma)
 {
     std::ofstream ofs(filename);
     if (!ofs)
@@ -222,19 +272,19 @@ void save_Iq(const std::string &filename, const std::vector<double> &q_vec, cons
         return;
     }
 
+    // write L, pdType, N, sigma as header, one per line
+    ofs << "L," << L << "\n";
+    ofs << "pdType," << pdType << "\n";
+    ofs << "N," << N << "\n";
+    ofs << "sigma," << sigma << "\n";
+
+
     // Write header lines (optional)
-    ofs << "q";
+    ofs << "q, I(q)\n";
     // Write q vector in one row
     for (size_t i = 0; i < q_vec.size(); ++i)
     {
-        ofs << "," << q_vec[i];
-    }
-    ofs << "\n";
-    ofs << "I(q)";
-    // Write S(q) values in one row
-    for (size_t i = 0; i < avg_Iq.size(); ++i)
-    {
-        ofs << "," << avg_Iq[i];
+        ofs << q_vec[i] << "," << avg_Iq[i] << "\n";
     }
 
     ofs.close();
@@ -245,19 +295,48 @@ void save_Iq(const std::string &filename, const std::vector<double> &q_vec, cons
 // and then saves the averaged S(q) and q vector to an output file in the folder.
 int main(int argc, char *argv[])
 {
-    if (argc != 6)
+    std::string folder_path;
+    std::string finfo;
+    std::string mode;
+    int L;
+    int pdType;
+    double N;
+    double sigma;
+    if (argc == 7 && std::string(argv[1]) == "prec")
     {
-        std::cerr << "Usage: " << argv[0] << " <pdType> " << argv[1] << "<N>" << argv[2] << "<sigma>" << argv[3] << "<N>" << std::endl;
-        return 1;
-    }
-    int L = std::stoi(argv[1]);
-    int pdType = std::stoi(argv[2]);
-    double N = std::stod(argv[3]);     // this is a double
-    double sigma = std::stod(argv[4]); // this is a double
-    std::string folder_path = argv[5];
+        // prec mode: L, pdType, N, sigma, folder
+        mode = argv[1];
+        L = std::stoi(argv[2]);
+        pdType = std::stoi(argv[3]);
+        N = std::stod(argv[4]);
+        sigma = std::stod(argv[5]);
+        folder_path = argv[6];
 
-    std::string finfo = "/L_" + std::string(argv[1]) + "_pdType_" + std::string(argv[2]) + "_N_" + std::string(argv[3]) + "_sigma_" + std::string(argv[4]);
-    std::string save_file = folder_path + finfo  + "_Iq.csv";
+        finfo = "/L_" + std::string(argv[2]) + "_pdType_" + std::string(argv[3]) + "_N_" + std::string(argv[4]) + "_sigma_" + std::string(argv[5]);
+    }
+    else if (argc == 6 && std::string(argv[1]) == "rand")
+    {
+        // rand mode: L, pdType, run, folder
+        mode = argv[1];
+        L = std::stoi(argv[2]);
+        pdType = std::stoi(argv[3]);
+        int run = std::stoi(argv[4]);
+        folder_path = argv[5];
+
+        finfo = "/L_" + std::string(argv[2]) + "_pdType_" + std::string(argv[3]) + "_run_" + std::string(argv[4]);
+        std::vector<double> N_sigma_vec = read_N_sigma_val(folder_path + finfo + "/dump.000000000.txt");
+        N = N_sigma_vec[0];
+        sigma = N_sigma_vec[1];
+    }
+    else
+    {
+        std::cerr << "Usage:" << std::endl;
+        std::cerr << "  For 'rand' mode: " << argv[0] << " rand <L> <pdType> <run> <folder>" << std::endl;
+        std::cerr << "  For 'prec' mode: " << argv[0] << " prec <L> <pdType> <N> <sigma> <folder>" << std::endl;
+        return 0;
+    }
+
+    std::string save_file = folder_path + finfo + "_Iq.csv";
     std::string dump_folder = folder_path + finfo;
 
     // Start timer.
@@ -269,8 +348,8 @@ int main(int argc, char *argv[])
     int N_phi = 100;
     std::vector<double> q_vec(num_q);
     // double qi = 1e-2;
-    double qi = 0;
-    double qf = 15e0;
+    double qi = 3;
+    double qf = 13e0;
     for (int k = 0; k < num_q; k++)
     {
         // q_vec[k] = qi * std::pow(qf / qi, 1.0 * k / (num_q - 1)); // uniform in log scale;
@@ -278,10 +357,10 @@ int main(int argc, char *argv[])
     }
 
     // Calculate the average S(q) over all dump files in the folder.
-    std::vector<double> avg_Iq = calc_average_Iq(dump_folder, q_vec, N_theta, N_phi);
+    std::vector<double> avg_Iq = calc_average_Iq(mode, dump_folder, q_vec, N_theta, N_phi);
 
     // Save the q vector and averaged S(q) to a file in the folder.
-    save_Iq(save_file, q_vec, avg_Iq);
+    save_Iq(save_file, q_vec, avg_Iq, L, pdType, N, sigma);
 
     // Stop timer.
     auto end_time = std::chrono::steady_clock::now();

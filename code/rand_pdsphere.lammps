@@ -1,4 +1,5 @@
 # ===================== System Parameters =====================
+#variable   L     equal 18         # box length
 #variable   pdType equal 3  # 1: uniform, 2: normal, 3: lognormal
 #variable    N     equal 0.5          # target number density (atoms per unit volume)
 #variable    sigma   equal 0.1          # standard deviation of diameters
@@ -8,13 +9,19 @@
 # reference different types of polydispersity:
 # https://www.sasview.org/docs/user/qtgui/Perspectives/Fitting/pd/polydispersity.html
 
-
-variable path string "${folder}/pdType_${pdType}_N_${N}_sigma_${sigma}"
+variable path string "${folder}/L_${L}_pdType_${pdType}_run_${run}"
 shell mkdir ${path}
 
 log ${path}/log.lammps
+variable seed equal 67890
+
+print "============================================================"
+variable N      equal random(0.05,0.60,${seed})
+variable sigma  equal random(0.00,0.11,${seed})
+print "============================================================"
 
 variable n equal $N/8  # will rescale the box to half the size
+
 
 units		lj
 atom_style	sphere
@@ -22,8 +29,9 @@ boundary    p p p
 dimension	3
 
 lattice		fcc $n
+region		box block 0 $L 0 $L 0 $L
 #region		box block -8 8 -8 8 -8 8
-region		box block -4 4 -4 4 -4 4
+#region		box block -4 4 -4 4 -4 4
 create_box	1 box
 create_atoms	1 box
 
@@ -37,7 +45,7 @@ create_atoms	1 box
 # lognormal dsitribution, pd = sigma/x_median, x_median = 1.0 -> mu = 0.0
 #variable z atom normal(0.0,${sigma},67890)
 #variable diam atom exp(v_z) # transform normal to lognormal
-variable seed equal 67890
+
 print "============================================================"
 #–– pick the diam definition based on pdType ––
 if "${pdType} == 1" then &
@@ -52,7 +60,6 @@ if "${pdType} == 3" then &
     "variable z    atom normal(0.0,${sigma},${seed})" &
     "variable diam atom exp(v_z)" &
     "print 'using lognormal distribution' "
-
 print "============================================================"
 
 #variable diam atom "${pdType}==1 ? uniform(1.0-${sigma},1.0+${sigma},67890) : ${pdType}==2 ? normal(1.0,${sigma},67890) : lognormal(1.0,${sigma},67890)"
@@ -65,10 +72,11 @@ set         group all density 1.0
 
 # interaction
 pair_style      lj/cut/sphere 1.0
+pair_coeff      * * 100.0
 pair_modify     mix arithmetic shift yes
-pair_coeff      1 1 100.0
-
-pair_write 1 1 1000 r 0.5 10.0 ${path}/pair_coeff.txt LJ
+#pair_modify shift yes
+shell rm ${path}/pair_coeff.txt       # prevent appending old data
+pair_write 1 1 200 r 0.5 2.0 ${path}/pair_coeff.txt LJ
 
 
 # =========== Reset============
@@ -118,18 +126,19 @@ unfix 4
 #velocity all create 1 1684651 dist gaussian
 velocity        all create 1.0 67890 dist gaussian mom yes rot no
 fix		5 all nvt temp 1 1 $(50.0*dt)
-run		5000
+run		10000
 
 reset_timestep 0
 
 #dump            traj all custom 100 dump.poly.lammpstrj id type x y z diameter
 #dump_modify     traj sort id
+#variable    dump_N equal $N
+#variable    dump_sigma equal ${sigma}
+#fix         dump_vars all print 1 "${dump_N} ${dump_sigma}" file ${path}/dump_vars.txt
 
-#dump	    2 all custom 500 dump.*.txt id type x y z xu yu zu diameter
-dump	    2 all custom 500 ${path}/dump.*.txt id type x y z diameter
+variable N_atom      atom v_N
+variable sigma_atom  atom v_sigma
+
+dump	    2 all custom 1000 ${path}/dump.*.txt id type x y z diameter v_N_atom v_sigma_atom
 dump_modify 2 flush yes pad 9
-run             10000
-
-# -------------------- Clean Up --------------------
-#unfix           nvt1
-write_restart   final.poly.lammpstrj.restart
+run        100000
