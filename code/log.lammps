@@ -12,11 +12,11 @@ LAMMPS (29 Aug 2024 - Update 1)
 
 variable path string "${folder}/L_${L}_pdType_${pdType}_run_${run}"
 /Users/ldq/Work/Polydisperse_Sphere/data_local/L_${L}_pdType_${pdType}_run_${run}
-/Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_${pdType}_run_${run}
-/Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_2_run_${run}
-/Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_2_run_0
+/Users/ldq/Work/Polydisperse_Sphere/data_local/L_9_pdType_${pdType}_run_${run}
+/Users/ldq/Work/Polydisperse_Sphere/data_local/L_9_pdType_2_run_${run}
+/Users/ldq/Work/Polydisperse_Sphere/data_local/L_9_pdType_2_run_3
 shell mkdir ${path}
-shell mkdir /Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_2_run_0
+shell mkdir /Users/ldq/Work/Polydisperse_Sphere/data_local/L_9_pdType_2_run_3
 
 log ${path}/log.lammps
-log /Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_2_run_0/log.lammps
+log /Users/ldq/Work/Polydisperse_Sphere/data_local/L_9_pdType_2_run_3/log.lammps
