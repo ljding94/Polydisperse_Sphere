@@ -16,8 +16,13 @@ log ${path}/log.lammps
 variable seed equal 67890+${run}
 
 print "============================================================"
-variable N      equal random(0.05,0.60,${seed})
-variable sigma  equal random(0.00,0.11,${seed})
+# -- one-off draw --
+variable N_tmp      equal random(0.05,0.60,${seed})
+variable sigma_tmp  equal random(0.00,0.11,${seed})
+variable N          equal ${N_tmp}
+variable sigma      equal ${sigma_tmp}
+variable  N_tmp     delete
+variable  sigma_tmp delete
 print "seed = ${seed}"
 print "N (target number density) = ${N}"
 print "sigma (std dev of diameters) = ${sigma}"

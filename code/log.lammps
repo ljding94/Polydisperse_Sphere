@@ -14,9 +14,9 @@ variable path string "${folder}/L_${L}_pdType_${pdType}_run_${run}"
 /Users/ldq/Work/Polydisperse_Sphere/data_local/L_${L}_pdType_${pdType}_run_${run}
 /Users/ldq/Work/Polydisperse_Sphere/data_local/L_9_pdType_${pdType}_run_${run}
 /Users/ldq/Work/Polydisperse_Sphere/data_local/L_9_pdType_2_run_${run}
-/Users/ldq/Work/Polydisperse_Sphere/data_local/L_9_pdType_2_run_3
+/Users/ldq/Work/Polydisperse_Sphere/data_local/L_9_pdType_2_run_2
 shell mkdir ${path}
-shell mkdir /Users/ldq/Work/Polydisperse_Sphere/data_local/L_9_pdType_2_run_3
+shell mkdir /Users/ldq/Work/Polydisperse_Sphere/data_local/L_9_pdType_2_run_2
 
 log ${path}/log.lammps
-log /Users/ldq/Work/Polydisperse_Sphere/data_local/L_9_pdType_2_run_3/log.lammps
+log /Users/ldq/Work/Polydisperse_Sphere/data_local/L_9_pdType_2_run_2/log.lammps
