@@ -45,9 +45,15 @@ if "${pdType} == 1" then &
     "variable diam atom random(1-${sigma},1+${sigma},${seed})" &
     "print 'using uniform distribution' "
 
+variable dmin equal 0.1
+#if "${pdType} == 2" then &
+#    "variable diam atom normal(1.0,${sigma},${seed})" &
+#    "print 'using normal distribution' "
+
 if "${pdType} == 2" then &
-    "variable diam atom normal(1.0,${sigma},${seed})" &
-    "print 'using normal distribution' "
+  "variable diam_raw atom normal(1.0,${sigma},${seed})" &
+  "variable diam atom ternary(v_diam_raw<v_dmin,v_dmin,v_diam_raw)" &
+  "print 'using normal distribution, truncated below ${dmin}'"
 
 if "${pdType} == 3" then &
     "variable z    atom normal(0.0,${sigma},${seed})" &
@@ -56,9 +62,8 @@ if "${pdType} == 3" then &
 
 print "============================================================"
 
-#variable diam atom "${pdType}==1 ? uniform(1.0-${sigma},1.0+${sigma},67890) : ${pdType}==2 ? normal(1.0,${sigma},67890) : lognormal(1.0,${sigma},67890)"
-
 set         group all diameter v_diam
+
 
 # (Optional) Assign density so mass = density × volume_of_sphere
 set         group all density 1.0
@@ -86,6 +91,7 @@ thermo_style    custom step temp pe etotal press
 
 # run simulation
 ## equilibrate
+#timestep      0.001
 timestep      0.001
 thermo_style	custom step temp epair etotal press vol
 thermo		100
@@ -102,7 +108,10 @@ run 10000
 unfix 2
 unfix 3
 
+#fix 6 all dt/reset 1 0.0001 0.001  0.1
+
 fix 4 all nve/limit 0.1
+#fix 4 all nve/limit 0.05
 run 10000
 unfix 4
 
@@ -117,10 +126,15 @@ unfix 4
 # ======== Stage 4: Full “Hard‐Sphere” (ε=100.0) ========
 #pair_coeff      1 1 100.0
 
+
 #velocity all create 1 1684651 dist gaussian
 velocity        all create 1.0 67890 dist gaussian mom yes rot no
 fix		5 all nvt temp 1 1 $(50.0*dt)
+#fix		5 all nvt temp 1 1 $(200.0*dt)
+#fix int   all nve/limit 0.1
+#fix bath  all langevin 1.0 1.0 20.0 732451  # Tstart Tstop Tdamp seed
 run		10000
+
 
 reset_timestep 0
 
@@ -128,6 +142,6 @@ reset_timestep 0
 #dump_modify     traj sort id
 
 #dump	    2 all custom 500 dump.*.txt id type x y z xu yu zu diameter
-dump	    2 all custom 1000 ${path}/dump.*.txt id type x y z diameter
+dump	    2 all custom 2000 ${path}/dump.*.txt id type x y z diameter
 dump_modify 2 flush yes pad 9
-run        100000
+run        200000

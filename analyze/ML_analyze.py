@@ -18,8 +18,8 @@ def read_prec_Iq_by_param(folder, params, nskip=0):
         finfo = f"L_{L:.0f}_pdType_{pdType:.0f}_N_{N:.2f}_sigma_{sigma:.2f}"
         data = np.genfromtxt(f"{folder}/{finfo}_Iq.csv", delimiter=",")
         q, Iq = data[0, 1:], data[1, 1:]
-        if Iq[0]==0:
-            print("0 Iq",finfo)
+        if Iq[0] == 0:
+            print("0 Iq", finfo)
             continue
         all_Iq.append(Iq[nskip:])  # Skip the first nskip points
         all_params.append(param)
@@ -28,16 +28,36 @@ def read_prec_Iq_by_param(folder, params, nskip=0):
     return [np.array(q), np.array(all_Iq), np.array(all_params), params_name]
 
 
-def svd_analysis(folder):
+def read_prec_Iq_by_finfo(folder, finfos, nskip=0):
+    params_name = ["L", "pdType", "N", "sigma"]
+    all_Iq = []
+    all_params = []
+    q = None
+    for i, finfo in enumerate(finfos):
+        data = np.genfromtxt(f"{folder}/{finfo}_Iq.csv", delimiter=",")
+        # Extract parameters from the file
+        L = data[0, 1]
+        pdType = data[1, 1]
+        N = data[2, 1]
+        sigma = data[3, 1]
+        param = [L, pdType, N, sigma]
+        # Extract q and I(q) data (starting from row 5, skipping header)
+        q_temp, Iq = data[5:, 0], data[5:, 1]
 
-    L = 18
-    params = []
-    for pdType in [3]:
-        for N in np.arange(0.05, 0.61, 0.05):
-            for sigma in np.arange(0.00, 0.151, 0.01):
-                params.append((L, pdType, N, sigma))
-    q, all_Iq, all_params, params_name = read_prec_Iq_by_param(folder, params, nskip=15)
+        if Iq[0] == 0:
+            print("0 Iq file:", finfo)
+            continue
+        all_params.append(param)
+        all_Iq.append(Iq[nskip:])  # Skip the first nskip points
+        if q is None:
+            q = q_temp[nskip:]  # Skip the first nskip points
 
+    return [np.array(q), np.array(all_Iq), np.array(all_params), params_name]
+
+
+def svd_analysis(folder, finfos):
+
+    q, all_Iq, all_params, params_name = read_prec_Iq_by_finfo(folder, finfos, nskip=15)
 
     F = np.log10(np.array(all_Iq))  # Convert to log scale
     print("samples, shape:", F.shape)
@@ -45,15 +65,27 @@ def svd_analysis(folder):
     U, S, Vh = np.linalg.svd(F, full_matrices=False)
     print("Singular values:", S)
 
+    # Create figure with two subplots
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+
     # Plot singular values
-    plt.figure(figsize=(6, 4))
-    plt.plot(range(len(S)), S, "o--", markerfacecolor="none")
-    plt.xlabel("Index")
-    plt.ylabel("Singular Value")
-    plt.title("Singular Values from SVD")
+    ax1.plot(range(len(S)), S, "o--", markerfacecolor="none")
+    ax1.set_xlabel("Index")
+    ax1.set_ylabel("Singular Value")
+    ax1.set_title("Singular Values from SVD")
+
+    # Plot first three singular vectors I(q) vs q
+    for i in range(3):
+        ax2.plot(q, Vh[i, :], label=f"V{i+1}")
+    ax2.set_xlabel("q")
+    ax2.set_ylabel("log10(I(q)) from V")
+    ax2.set_title("First Three Singular Vectors")
+    ax2.legend()
+
     plt.tight_layout()
-    plt.savefig(os.path.join(folder, "singular_values.png"), dpi=300)
+    plt.savefig(os.path.join(folder, "singular_values_and_vectors.png"), dpi=300)
     plt.show()
+
 
     # Use the first three left singular vectors for projection
     projection = U[:, :3]
@@ -62,7 +94,7 @@ def svd_analysis(folder):
 
     for i in range(n_params):
         ax = fig.add_subplot(1, n_params, i + 1, projection="3d")
-        print("all_params.shape",all_params.shape)
+        print("all_params.shape", all_params.shape)
         sc = ax.scatter(projection[:, 0], projection[:, 1], projection[:, 2], c=all_params[:, i], cmap="jet", s=20)
         ax.set_title(f"SVD Projection colored by {params_name[i]}")
         ax.set_xlabel("U1")
