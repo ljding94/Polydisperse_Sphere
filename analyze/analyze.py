@@ -3,6 +3,7 @@ import numpy as np
 from matplotlib.colors import Normalize
 from pathlib import Path
 from scipy import interpolate, optimize
+from analyze_PY import *
 
 
 def plot_Iq_prec(folder, params, nskip=0):
@@ -81,5 +82,60 @@ def plot_Iq_prec_by_param(folder, params, nskip=0, spine=False):
 
     plt.tight_layout()
     plt.savefig(f"{folder}/Iq_plot_by_param.png")
+    plt.show()
+    plt.close()
+
+
+def compare_Iq_by_param(folder, params, nskip=0, label=None):
+    for i, param in enumerate(params):
+        L, pdType, N, sigma = param
+        finfo = f"L_{L:.0f}_pdType_{pdType}_N_{N:.2f}_sigma_{sigma:.2f}"
+        data = np.genfromtxt(f"{folder}/{finfo}_Iq.csv", delimiter=",")
+        q, Iq = data[0, 1:], data[1, 1:]
+        print(finfo, q, Iq)
+        # find volume fraction eta
+        eta = calc_volume_fraction(0.5, N, sigma, pdType)
+        # Create a denser q grid for PY calculation
+        q_dense = np.linspace(q.min(), q.max(), len(q) * 5)
+        Iq_PY_dense = calc_HS_PY_IQ(q_dense, eta, sigma,pdType)
+        plt.plot(q[nskip:], Iq[nskip:], "o", mfc="None", label=f"{finfo}")
+        color = plt.gca().lines[-1].get_color()
+        plt.plot(q_dense, Iq_PY_dense, ls="-", color=color)
+    plt.yscale("log")
+    plt.xlabel("QD")
+    plt.ylabel("I(QD)")
+    plt.legend()
+    plt.grid()
+    plt.savefig(f"{folder}/Iq_plot_check_{label}.png")
+    plt.show()
+    plt.close()
+
+
+def fit_Iq_by_param(folder, params, nskip=0, label=None):
+    for i, param in enumerate(params):
+        L, pdType, N, sigma = param
+        finfo = f"L_{L:.0f}_pdType_{pdType}_N_{N:.2f}_sigma_{sigma:.2f}"
+        data = np.genfromtxt(f"{folder}/{finfo}_Iq.csv", delimiter=",")
+        q, Iq = data[0, 1:], data[1, 1:]
+        if Iq[0]==0:
+            continue
+        eta = calc_volume_fraction(0.5, N, sigma, pdType)
+        #print(finfo, q, Iq)
+        plt.plot(q[nskip:], Iq[nskip:], "o", mfc="None", label=f"N={N},eta={eta}, sigma={sigma:.2f}")
+
+        fit_PY = fit_eta_sigma(q[nskip:], Iq[nskip:], pdType=pdType)
+        # Create a denser q grid for PY calculation
+        q_dense = np.linspace(q[nskip:].min(), q[nskip:].max(), len(q[nskip:]) * 5)
+
+        Iq_PY_dense = calc_HS_PY_IQ(q_dense, fit_PY["eta"], fit_PY["sigma"], pdType)
+
+        color = plt.gca().lines[-1].get_color()
+        plt.plot(q_dense, Iq_PY_dense, ls="-", color=color, label=f"fit: eta={fit_PY['eta']:.2f}, sigma={fit_PY['sigma']:.2f}")
+    plt.yscale("log")
+    plt.xlabel("QD")
+    plt.ylabel("I(QD)")
+    plt.legend()
+    plt.grid()
+    plt.savefig(f"{folder}/Iq_plot_fit_{label}.png")
     plt.show()
     plt.close()

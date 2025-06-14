@@ -1,5 +1,6 @@
 LAMMPS (29 Aug 2024 - Update 1)
 # ===================== System Parameters =====================
+#variable   L     equal 18         # box length
 #variable   pdType equal 3  # 1: uniform, 2: normal, 3: lognormal
 #variable    N     equal 0.5          # target number density (atoms per unit volume)
 #variable    sigma   equal 0.1          # standard deviation of diameters
@@ -9,14 +10,13 @@ LAMMPS (29 Aug 2024 - Update 1)
 # reference different types of polydispersity:
 # https://www.sasview.org/docs/user/qtgui/Perspectives/Fitting/pd/polydispersity.html
 
-variable path string "${folder}/L_${L}_pdType_${pdType}_N_${N}_sigma_${sigma}"
-/Users/ldq/Work/Polydisperse_Sphere/data_local/L_${L}_pdType_${pdType}_N_${N}_sigma_${sigma}
-/Users/ldq/Work/Polydisperse_Sphere/data_local/L_16_pdType_${pdType}_N_${N}_sigma_${sigma}
-/Users/ldq/Work/Polydisperse_Sphere/data_local/L_16_pdType_1_N_${N}_sigma_${sigma}
-/Users/ldq/Work/Polydisperse_Sphere/data_local/L_16_pdType_1_N_0.50_sigma_${sigma}
-/Users/ldq/Work/Polydisperse_Sphere/data_local/L_16_pdType_1_N_0.50_sigma_0.30
+variable path string "${folder}/L_${L}_pdType_${pdType}_run_${run}"
+/Users/ldq/Work/Polydisperse_Sphere/data_local/L_${L}_pdType_${pdType}_run_${run}
+/Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_${pdType}_run_${run}
+/Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_3_run_${run}
+/Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_3_run_0
 shell mkdir ${path}
-shell mkdir /Users/ldq/Work/Polydisperse_Sphere/data_local/L_16_pdType_1_N_0.50_sigma_0.30
+shell mkdir /Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_3_run_0
 
 log ${path}/log.lammps
-log /Users/ldq/Work/Polydisperse_Sphere/data_local/L_16_pdType_1_N_0.50_sigma_0.30/log.lammps
+log /Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_3_run_0/log.lammps

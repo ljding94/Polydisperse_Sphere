@@ -1,19 +1,29 @@
 # ===================== System Parameters =====================
 #variable   pdType equal 3  # 1: uniform, 2: normal, 3: lognormal
+#variable    eta   equal 0.3          # target volume fraaction
 #variable    N     equal 0.5          # target number density (atoms per unit volume)
 #variable    sigma   equal 0.1          # standard deviation of diameters
 
-# input pdType, N, sigma, folder
+# input pdType, eta, sigma, folder
 
 # reference different types of polydispersity:
 # https://www.sasview.org/docs/user/qtgui/Perspectives/Fitting/pd/polydispersity.html
 
-variable path string "${folder}/L_${L}_pdType_${pdType}_N_${N}_sigma_${sigma}"
+variable path string "${folder}/L_${L}_pdType_${pdType}_eta_${eta}_sigma_${sigma}"
 shell mkdir ${path}
 
 log ${path}/log.lammps
 
-variable n equal $N/8  # will rescale the box to half the size
+#---find n based on eta and sigma---
+if "${pdType} == 1" then &
+    "variable n equal ${eta}/8*6/3.14159265358979/(1+${sigma}*${sigma})" &
+    "print 'using uniform distribution, n = ${n}' "
+if "${pdType} == 2" then &
+    "variable n equal ${eta}/8*6/3.14159265358979/(1+2*${sigma}*${sigma})" &
+    "print 'using normal distribution, n = ${n}' "
+if "${pdType} == 3" then &
+    "variable n equal ${eta}/8*6/3.14159265358979*exp(-4.5*${sigma}*${sigma})" &
+    "print 'using lognormal distribution, n = ${n}' "
 
 
 units		lj

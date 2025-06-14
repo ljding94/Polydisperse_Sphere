@@ -15,21 +15,32 @@ shell mkdir ${path}
 log ${path}/log.lammps
 variable seed equal 67890+${run}
 
+
+
+
 print "============================================================"
 # -- one-off draw --
-variable N_tmp      equal random(0.05,0.50,${seed})
+variable eta_tmp      equal random(0.001,0.50,${seed})
 variable sigma_tmp  equal random(0.00,0.30,${seed})
-variable N          equal ${N_tmp}
+variable eta          equal ${eta_tmp}
 variable sigma      equal ${sigma_tmp}
-variable  N_tmp     delete
+variable  eta_tmp     delete
 variable  sigma_tmp delete
 print "seed = ${seed}"
-print "N (target number density) = ${N}"
+print "eta (volume fraction) = ${eta}"
 print "sigma (std dev of diameters) = ${sigma}"
 print "============================================================"
 
-variable n equal $N/8  # will rescale the box to half the size
-
+#---find n based on eta and sigma---
+if "${pdType} == 1" then &
+    "variable n equal ${eta}/8*6/3.14159265358979/(1+${sigma}*${sigma})" &
+    "print 'using uniform distribution, n = ${n}' "
+if "${pdType} == 2" then &
+    "variable n equal ${eta}/8*6/3.14159265358979/(1+2*${sigma}*${sigma})" &
+    "print 'using normal distribution, n = ${n}' "
+if "${pdType} == 3" then &
+    "variable n equal ${eta}/8*6/3.14159265358979*exp(-4.5*${sigma}*${sigma})" &
+    "print 'using lognormal distribution, n = ${n}' "
 
 units		lj
 atom_style	sphere
@@ -144,9 +155,9 @@ reset_timestep 0
 #variable    dump_sigma equal ${sigma}
 #fix         dump_vars all print 1 "${dump_N} ${dump_sigma}" file ${path}/dump_vars.txt
 
-variable N_atom      atom v_N
+variable eta_atom      atom v_eta
 variable sigma_atom  atom v_sigma
 
-dump	    2 all custom 2000 ${path}/dump.*.txt id type x y z diameter v_N_atom v_sigma_atom
+dump	    2 all custom 2000 ${path}/dump.*.txt id type x y z diameter v_eta_atom v_sigma_atom
 dump_modify 2 flush yes pad 9
 run        200000
