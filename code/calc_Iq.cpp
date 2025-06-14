@@ -65,14 +65,14 @@ std::vector<Atom> read_atom_positions(std::string mode, const std::string &dump_
     return atoms;
 }
 
-std::vector<double> read_N_sigma_val(const std::string &dump_file)
+std::vector<double> read_eta_sigma_val(const std::string &dump_file)
 {
-    std::vector<double> N_sigma_vec(2, -1.0); // Initialize with -1.0 to indicate error
+    std::vector<double> eta_sigma_vec(2, -1.0); // Initialize with -1.0 to indicate error
     std::ifstream infile(dump_file);
     if (!infile)
     {
         std::cerr << "Error opening file: " << dump_file << std::endl;
-        return N_sigma_vec;
+        return eta_sigma_vec;
     }
     std::cout<<"reading N and sigma from: "<<dump_file<<std::endl;
 
@@ -101,13 +101,13 @@ std::vector<double> read_N_sigma_val(const std::string &dump_file)
                 continue;
             }
             // Store N and sigma values in the vector.
-            N_sigma_vec[0] = N;     // Set N
-            N_sigma_vec[1] = sigma; // Set sigma
-            std::cout << "N: " << N_sigma_vec[0] << ", sigma: " << N_sigma_vec[1] << std::endl;
-            return N_sigma_vec;     // Return immediately after reading the first atom
+            eta_sigma_vec[0] = N;     // Set N
+            eta_sigma_vec[1] = sigma; // Set sigma
+            std::cout << "eta: " << eta_sigma_vec[0] << ", sigma: " << eta_sigma_vec[1] << std::endl;
+            return eta_sigma_vec;     // Return immediately after reading the first atom
         }
     }
-    return N_sigma_vec; // Return the vector with -1.0 if no valid data was found
+    return eta_sigma_vec; // Return the vector with -1.0 if no valid data was found
 }
 
 // function 2: calc Fq
@@ -263,7 +263,7 @@ std::vector<double> calc_average_Iq(std::string mode, const std::string &folder_
 
 // Function 4: save_Iq
 // Given a folder path, a q vector, and the averaged S(q) vector, save the data to an output file in the folder.
-void save_Iq(const std::string &filename, const std::vector<double> &q_vec, const std::vector<double> &avg_Iq, int L, int pdType, double N, double sigma)
+void save_Iq(const std::string &filename, const std::vector<double> &q_vec, const std::vector<double> &avg_Iq, int L, int pdType, double eta, double sigma)
 {
     std::ofstream ofs(filename);
     if (!ofs)
@@ -275,7 +275,7 @@ void save_Iq(const std::string &filename, const std::vector<double> &q_vec, cons
     // write L, pdType, N, sigma as header, one per line
     ofs << "L," << L << "\n";
     ofs << "pdType," << pdType << "\n";
-    ofs << "N," << N << "\n";
+    ofs << "eta," << eta << "\n";
     ofs << "sigma," << sigma << "\n";
 
 
@@ -300,7 +300,7 @@ int main(int argc, char *argv[])
     std::string mode;
     int L;
     int pdType;
-    double N;
+    double eta;
     double sigma;
     if (argc == 7 && std::string(argv[1]) == "prec")
     {
@@ -308,11 +308,11 @@ int main(int argc, char *argv[])
         mode = argv[1];
         L = std::stoi(argv[2]);
         pdType = std::stoi(argv[3]);
-        N = std::stod(argv[4]);
+        eta = std::stod(argv[4]);
         sigma = std::stod(argv[5]);
         folder_path = argv[6];
 
-        finfo = "/L_" + std::string(argv[2]) + "_pdType_" + std::string(argv[3]) + "_N_" + std::string(argv[4]) + "_sigma_" + std::string(argv[5]);
+        finfo = "/L_" + std::string(argv[2]) + "_pdType_" + std::string(argv[3]) + "_eta_" + std::string(argv[4]) + "_sigma_" + std::string(argv[5]);
     }
     else if (argc == 6 && std::string(argv[1]) == "rand")
     {
@@ -324,9 +324,9 @@ int main(int argc, char *argv[])
         folder_path = argv[5];
 
         finfo = "/L_" + std::string(argv[2]) + "_pdType_" + std::string(argv[3]) + "_run_" + std::string(argv[4]);
-        std::vector<double> N_sigma_vec = read_N_sigma_val(folder_path + finfo + "/dump.000000000.txt");
-        N = N_sigma_vec[0];
-        sigma = N_sigma_vec[1];
+        std::vector<double> eta_sigma_vec = read_eta_sigma_val(folder_path + finfo + "/dump.000000000.txt");
+        eta = eta_sigma_vec[0];
+        sigma = eta_sigma_vec[1];
     }
     else
     {
@@ -360,7 +360,7 @@ int main(int argc, char *argv[])
     std::vector<double> avg_Iq = calc_average_Iq(mode, dump_folder, q_vec, N_theta, N_phi);
 
     // Save the q vector and averaged S(q) to a file in the folder.
-    save_Iq(save_file, q_vec, avg_Iq, L, pdType, N, sigma);
+    save_Iq(save_file, q_vec, avg_Iq, L, pdType, eta, sigma);
 
     // Stop timer.
     auto end_time = std::chrono::steady_clock::now();

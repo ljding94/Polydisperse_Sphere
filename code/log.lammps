@@ -1,22 +1,23 @@
 LAMMPS (29 Aug 2024 - Update 1)
 # ===================== System Parameters =====================
-#variable   L     equal 18         # box length
 #variable   pdType equal 3  # 1: uniform, 2: normal, 3: lognormal
+#variable    eta   equal 0.3          # target volume fraaction
 #variable    N     equal 0.5          # target number density (atoms per unit volume)
 #variable    sigma   equal 0.1          # standard deviation of diameters
 
-# input pdType, N, sigma, folder
+# input pdType, eta, sigma, folder
 
 # reference different types of polydispersity:
 # https://www.sasview.org/docs/user/qtgui/Perspectives/Fitting/pd/polydispersity.html
 
-variable path string "${folder}/L_${L}_pdType_${pdType}_run_${run}"
-/Users/ldq/Work/Polydisperse_Sphere/data_local/L_${L}_pdType_${pdType}_run_${run}
-/Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_${pdType}_run_${run}
-/Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_3_run_${run}
-/Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_3_run_0
+variable path string "${folder}/L_${L}_pdType_${pdType}_eta_${eta}_sigma_${sigma}"
+/Users/ldq/Work/Polydisperse_Sphere/data_local/L_${L}_pdType_${pdType}_eta_${eta}_sigma_${sigma}
+/Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_${pdType}_eta_${eta}_sigma_${sigma}
+/Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_3_eta_${eta}_sigma_${sigma}
+/Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_3_eta_0.400_sigma_${sigma}
+/Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_3_eta_0.400_sigma_0.010
 shell mkdir ${path}
-shell mkdir /Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_3_run_0
+shell mkdir /Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_3_eta_0.400_sigma_0.010
 
 log ${path}/log.lammps
-log /Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_3_run_0/log.lammps
+log /Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_3_eta_0.400_sigma_0.010/log.lammps
