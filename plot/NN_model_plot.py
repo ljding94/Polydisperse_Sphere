@@ -14,7 +14,8 @@ def plot_gen_vs_PY_RMSE(tex_lw=240.71031, ppi=72):
     print("plotting generative model vs PY model RMSE comparison")
 
     data_folder = "../data/20250613"
-    model_path = "../data/20250615/L_18_pdType_1_gen_state_dict.pt"
+    #model_path = "../data/20250615/L_18_pdType_1_gen_state_dict.pt"
+    model_path = "../data/data_pack/L_18_pdType_1_gen_state_dict.pt"
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     gen_model = Generator(input_dim=2, latent_dim=3).to(device)

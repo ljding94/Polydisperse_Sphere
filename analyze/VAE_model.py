@@ -12,12 +12,18 @@ import matplotlib.pyplot as plt
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
 
-def denormalize_generated_Iq(folder, label, log10Iq_norm):
+def denormalize_generated_Iq(folder, label, log10Iq_norm, params_norm):
     log10Iq_stats = np.load(f"{folder}/{label}_train_stats.npz")
     log10Iq_mean = log10Iq_stats["mean"]
     log10Iq_std = log10Iq_stats["std"]
+    params_mean = log10Iq_stats["params_mean"]
+    params_std = log10Iq_stats["params_std"]
     log10Iq = log10Iq_norm * log10Iq_std + log10Iq_mean  # denormalize
-    return log10Iq
+    if len(params_mean) == 4:
+        params_mean = params_mean[2:]  # remove L and pdType
+        params_std = params_std[2:]  # remove L and pdType
+    params = params_norm * params_std + params_mean  # denormalize parameters
+    return log10Iq, params
 
 
 # --------------------------
@@ -30,20 +36,23 @@ class logIqDataset(Dataset):
         Iq_data = np.load(f"{folder}/{label}_{data_type}_data.npz")
         print(Iq_data.keys())
         # get data stats
-        log10Iq_stats = np.load(f"{folder}/{label}_train_stats.npz")
-        print(log10Iq_stats.keys())
-        self.log10Iq_mean = log10Iq_stats["mean"]
-        self.log10Iq_std = log10Iq_stats["std"]
+        data_stats = np.load(f"{folder}/{label}_train_stats.npz")
+        print(data_stats.keys())
+        self.log10Iq_mean = data_stats["mean"]
+        self.log10Iq_std = data_stats["std"]
+        self.params_mean = data_stats["params_mean"]
+        self.params_std = data_stats["params_std"]
 
         self.q = Iq_data["q"]
         self.log10Iq = (Iq_data["log10Iq"] - self.log10Iq_mean) / self.log10Iq_std  # normalize to mean=0, std=1 for each q point
+        Iq_params = (Iq_data["params"] - self.params_mean) / self.params_std  # normalize parameters
 
-        if len(Iq_data["params"][0]) == 4:
+        if len(Iq_params[0]) == 4:
             # stored L and pdType too
-            self.params = Iq_data["params"][:, 2:]
+            self.params = Iq_params[:, 2:]
             self.params_name = Iq_data["params_name"][2:]
         else:
-            self.params = Iq_data["params"]
+            self.params = Iq_params
             self.params_name = Iq_data["params_name"]
 
         print(self.log10Iq.shape, self.q.shape, self.params.shape)
@@ -158,7 +167,7 @@ class ConverterP2L(nn.Module):
         super().__init__()
         self.shared = nn.Sequential(
             nn.Linear(input_dim, 9),
-            nn.BatchNorm1d(9),
+            # nn.BatchNorm1d(9),
             nn.ReLU(),
         )
         # Branch for mu and logcar
@@ -175,7 +184,12 @@ class ConverterP2L(nn.Module):
 class ConverterL2P(nn.Module):
     def __init__(self, latent_dim, output_dim):
         super().__init__()
-        self.fc = nn.Sequential(nn.Linear(latent_dim, 9), nn.BatchNorm1d(9), nn.ReLU(), nn.Linear(9, output_dim))
+        self.fc = nn.Sequential(
+            nn.Linear(latent_dim, 9),
+            #nn.BatchNorm1d(9),
+            nn.ReLU(),
+            nn.Linear(9, output_dim),
+        )
 
     def forward(self, z):
         return self.fc(z)  # (B, latent_dim) → (B, output_dim)
@@ -671,7 +685,7 @@ def show_vae_random_reconstructions(
     with torch.no_grad():
         for _ in range(num_samples):
             # Grab one random sample
-            x, _, _ = next(iter(loader))
+            x, q, p = next(iter(loader))
             x = x.to(device)
             # Get reconstruction using deterministic forward pass (use mu directly)
             # mu, logvar = model.encoder(x)
@@ -679,18 +693,19 @@ def show_vae_random_reconstructions(
             recon_avg, mu, logvar = model(x)  # Use the mean reconstruction from the ensemble
             # Detach to CPU and numpy
             x_np = x.squeeze().cpu().numpy()  # (100,)
+            p_np = p.squeeze().cpu().numpy()  # (input_dim,)
             recon_np = recon_avg.squeeze().cpu().numpy()  # (100,)
             mu_np = mu.squeeze().cpu().numpy()  # (latent_dim,)
-            figs.append((x_np, recon_np, mu_np))
+            figs.append((x_np, recon_np, mu_np, p_np))
     # Plotting
     n_rows = num_samples
     fig, axes = plt.subplots(n_rows, 3, figsize=(15, 3 * n_rows))
     if n_rows == 1:
         axes = axes.reshape(1, 3)
-    for idx, (x_np, recon_np, mu_np) in enumerate(figs):
+    for idx, (x_np, recon_np, mu_np, p_np) in enumerate(figs):
         # Input 1D signal
         ax_in = axes[idx, 0]
-        x_np = denormalize_generated_Iq(folder, label, x_np)  # Assuming you have a function to denormalize
+        x_np, p_np = denormalize_generated_Iq(folder, label, x_np, p_np)  # Assuming you have a function to denormalize
         ax_in.plot(x_np, "b-", linewidth=1.5, label="Input")
         ax_in.set_title(f"Input #{idx}")
         ax_in.set_xlabel("Feature index")
@@ -699,10 +714,10 @@ def show_vae_random_reconstructions(
         ax_in.legend()
         # Reconstruction
         ax_out = axes[idx, 1]
-        recon_np = denormalize_generated_Iq(folder, label, recon_np)  # Assuming you have a function to denormalize
+        recon_np, _ = denormalize_generated_Iq(folder, label, recon_np, p_np)  # Assuming you have a function to denormalize
         ax_out.plot(recon_np, "r-", linewidth=1.5, label="Reconstruction")
         mu_str = ", ".join([f"{v:+.3f}" for v in mu_np])
-        ax_out.set_title(f"Recon #{idx}\nμ = [{mu_str}]")
+        ax_out.set_title(f"Recon #{idx} params = [{p_np[0],:+.3f}, {p_np[1]:+.3f}]\nLatent mu = [{mu_str}]")
         ax_out.set_xlabel("Feature index")
         ax_out.set_ylabel("log10(I(q))")
         ax_out.grid(True, alpha=0.3)
@@ -763,7 +778,7 @@ def show_gen_random_reconstruction(
     with torch.no_grad():
         for _ in range(num_samples):
             # Grab one random sample
-            log10Iq, _, p = next(iter(loader))
+            log10Iq, q, p = next(iter(loader))
             log10Iq, p = log10Iq.to(device), p.to(device)
             # Get reconstruction using deterministic forward pass (use mu directly)
             # mu, logvar = model.cvtp2l(p)
@@ -782,16 +797,16 @@ def show_gen_random_reconstruction(
     for idx, (Iq_np, recon_np, p_np) in enumerate(figs):
         # Input 1D signal
         ax_in = axes[idx, 0]
-        Iq_np = denormalize_generated_Iq(folder, label, Iq_np)
+        Iq_np, p_np = denormalize_generated_Iq(folder, label, Iq_np, p_np)
         ax_in.plot(Iq_np, "b-", linewidth=1.5, label="Input")
-        ax_in.set_title(f"Input #{idx}")
+        ax_in.set_title(f"Input #{idx}, params = [{p_np[0]:+.3f}, {p_np[1]:+.3f}]")
         ax_in.set_xlabel("Feature index")
         ax_in.set_ylabel("log10(I(q))")
         ax_in.grid(True, alpha=0.3)
         ax_in.legend()
         # Reconstruction
         ax_out = axes[idx, 1]
-        recon_np = denormalize_generated_Iq(folder, label, recon_np)
+        recon_np, _ = denormalize_generated_Iq(folder, label, recon_np, p_np)
         ax_out.plot(recon_np, "r-", linewidth=1.5, label="Reconstruction")
         p_str = ", ".join([f"{v:+.3f}" for v in p_np])
         ax_out.set_title(f"Recon #{idx}\nParams = [{p_str}]")

@@ -4,8 +4,8 @@ from ML_analyze import *
 def main():
     print("analyzing data ing......")
     #folder = "../data/20250606"
-    #folder = "../data/20250615"
-    folder = "../data/20250623"
+    folder = "../data/20250615" # pdType 1 data
+    folder = "../data/20250623" # pdType 2 data
     finfos = []
     L = 18
     pdType = 2

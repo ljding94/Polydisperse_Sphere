@@ -88,9 +88,14 @@ def wrap_Iq_data(folder, finfos, label="", train_perc=0.8, max_nfiles=5000):
     train_log10Iq_mean = np.mean(train_log10Iq, axis=0)
     train_log10Iq_std = np.std(train_log10Iq, axis=0)
 
+    # Calculate mean and std for parameters
+    train_params_mean = np.mean(train_params, axis=0)
+    train_params_std = np.std(train_params, axis=0)
+
     # Save the statistics
     np.savez_compressed(os.path.join(folder, f"{label}_train_stats.npz"),
-                       q=q, mean=train_log10Iq_mean, std=train_log10Iq_std)
+                        q=q, mean=train_log10Iq_mean, std=train_log10Iq_std,
+                        params_mean=train_params_mean, params_std=train_params_std)
 
     return q, train_log10Iq, train_params, test_log10Iq, test_params, params_name
 
