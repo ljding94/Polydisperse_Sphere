@@ -4,8 +4,10 @@ code/*.o
 code/*.out
 code/.DS_Store
 !analyze
+analyze/.DS_Store
 analyze/__pycache__
 !plot
+plot/.DS_Store
 plot/__pycache__
 plot/figures/*
 !README.md

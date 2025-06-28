@@ -12,12 +12,12 @@ LAMMPS (29 Aug 2024 - Update 1)
 
 variable path string "${folder}/L_${L}_pdType_${pdType}_eta_${eta}_sigma_${sigma}"
 /Users/ldq/Work/Polydisperse_Sphere/data_local/L_${L}_pdType_${pdType}_eta_${eta}_sigma_${sigma}
-/Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_${pdType}_eta_${eta}_sigma_${sigma}
-/Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_3_eta_${eta}_sigma_${sigma}
-/Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_3_eta_0.400_sigma_${sigma}
-/Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_3_eta_0.400_sigma_0.010
+/Users/ldq/Work/Polydisperse_Sphere/data_local/L_18_pdType_${pdType}_eta_${eta}_sigma_${sigma}
+/Users/ldq/Work/Polydisperse_Sphere/data_local/L_18_pdType_2_eta_${eta}_sigma_${sigma}
+/Users/ldq/Work/Polydisperse_Sphere/data_local/L_18_pdType_2_eta_0.10_sigma_${sigma}
+/Users/ldq/Work/Polydisperse_Sphere/data_local/L_18_pdType_2_eta_0.10_sigma_0.10
 shell mkdir ${path}
-shell mkdir /Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_3_eta_0.400_sigma_0.010
+shell mkdir /Users/ldq/Work/Polydisperse_Sphere/data_local/L_18_pdType_2_eta_0.10_sigma_0.10
 
 log ${path}/log.lammps
-log /Users/ldq/Work/Polydisperse_Sphere/data_local/L_10_pdType_3_eta_0.400_sigma_0.010/log.lammps
+log /Users/ldq/Work/Polydisperse_Sphere/data_local/L_18_pdType_2_eta_0.10_sigma_0.10/log.lammps

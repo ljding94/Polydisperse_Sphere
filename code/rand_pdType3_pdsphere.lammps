@@ -18,7 +18,7 @@ variable seed equal 67890+${run}
 print "============================================================"
 # -- one-off draw --
 variable eta_tmp      equal random(0.001,0.50,${seed})
-variable sigma_tmp  equal random(0.00,0.10,${seed})
+variable sigma_tmp  equal random(0.00,0.12,${seed})
 variable eta          equal ${eta_tmp}
 variable sigma      equal ${sigma_tmp}
 variable  eta_tmp     delete

@@ -6,6 +6,7 @@ import os
 import pickle
 from scipy.spatial import cKDTree
 from itertools import product
+from analyze import get_smoothed_Iq_per_file
 
 
 def read_prec_Iq_by_param(folder, params, nskip=0):
@@ -28,36 +29,75 @@ def read_prec_Iq_by_param(folder, params, nskip=0):
     return [np.array(q), np.array(all_Iq), np.array(all_params), params_name]
 
 
-def read_prec_Iq_by_finfo(folder, finfos, nskip=0):
-    params_name = ["L", "pdType", "N", "sigma"]
+def read_Iq_by_finfo(folder, finfos, max_nfiles, nskip=0):
+    params_name = ["L", "pdType", "eta", "sigma"]
     all_Iq = []
     all_params = []
     q = None
     for i, finfo in enumerate(finfos):
-        data = np.genfromtxt(f"{folder}/{finfo}_Iq.csv", delimiter=",")
-        # Extract parameters from the file
-        L = data[0, 1]
-        pdType = data[1, 1]
-        N = data[2, 1]
-        sigma = data[3, 1]
-        param = [L, pdType, N, sigma]
-        # Extract q and I(q) data (starting from row 5, skipping header)
-        q_temp, Iq = data[5:, 0], data[5:, 1]
+        filename = f"{folder}/{finfo}_Iq.csv"
+        if not os.path.exists(filename):
+            print(f"File not found: {filename}")
+            continue
+        q_temp, Iq, Iq_smooth, L, pdType, eta, sigma = get_smoothed_Iq_per_file(folder, finfo, nskip)
+
+        param = [L, pdType, eta, sigma]
 
         if Iq[0] == 0:
-            print("0 Iq file:", finfo)
+            print("skipping 0 Iq file:", finfo)
             continue
         all_params.append(param)
-        all_Iq.append(Iq[nskip:])  # Skip the first nskip points
+        all_Iq.append(Iq_smooth[nskip:])  # Skip the first nskip points
         if q is None:
             q = q_temp[nskip:]  # Skip the first nskip points
+    all_Iq = np.array(all_Iq)
+    all_params = np.array(all_params)
+
+    if len(all_Iq) > max_nfiles:
+        indices = np.random.choice(len(all_Iq), max_nfiles, replace=False)
+        all_Iq = all_Iq[indices]
+        all_params = all_params[indices]
 
     return [np.array(q), np.array(all_Iq), np.array(all_params), params_name]
 
 
-def svd_analysis(folder, finfos):
+def wrap_Iq_data(folder, finfos, label="", train_perc=0.8, max_nfiles=5000):
+    # 1. get all I(q) from the finfos and folder
+    q, all_Iq, all_params, params_name = read_Iq_by_finfo(folder, finfos, max_nfiles)
 
-    q, all_Iq, all_params, params_name = read_prec_Iq_by_finfo(folder, finfos, nskip=15)
+    # 3. split into train and test sets based on train_perc
+    n_samples = len(all_Iq)
+    n_train = int(train_perc * n_samples)
+
+    # Shuffle the data
+    indices = np.random.permutation(n_samples)
+    train_indices = indices[:n_train]
+    test_indices = indices[n_train:]
+
+    train_log10Iq = np.log10(all_Iq[train_indices])
+    train_params = all_params[train_indices]
+    test_log10Iq = np.log10(all_Iq[test_indices])
+    test_params = all_params[test_indices]
+
+    # 4. save train and test set into npz files in the folder
+    np.savez_compressed(os.path.join(folder, f"{label}_train_data.npz"), q=q, log10Iq=train_log10Iq, params=train_params, params_name=params_name)
+
+    np.savez_compressed(os.path.join(folder, f"{label}_test_data.npz"), q=q, log10Iq=test_log10Iq, params=test_params, params_name=params_name)
+
+    # Calculate mean and std per q for all Iq in the training set
+    train_log10Iq_mean = np.mean(train_log10Iq, axis=0)
+    train_log10Iq_std = np.std(train_log10Iq, axis=0)
+
+    # Save the statistics
+    np.savez_compressed(os.path.join(folder, f"{label}_train_stats.npz"),
+                       q=q, mean=train_log10Iq_mean, std=train_log10Iq_std)
+
+    return q, train_log10Iq, train_params, test_log10Iq, test_params, params_name
+
+
+def svd_analysis(folder, finfos, max_nfiles=5000):
+
+    q, all_Iq, all_params, params_name = read_Iq_by_finfo(folder, finfos, max_nfiles)
 
     F = np.log10(np.array(all_Iq))  # Convert to log scale
     print("samples, shape:", F.shape)
@@ -86,14 +126,13 @@ def svd_analysis(folder, finfos):
     plt.savefig(os.path.join(folder, "singular_values_and_vectors.png"), dpi=300)
     plt.show()
 
-
     # Use the first three left singular vectors for projection
     projection = U[:, :3]
     n_params = len(params_name)
-    fig = plt.figure(figsize=(6 * n_params, 6))
+    fig = plt.figure(figsize=(6 * (n_params + 1), 6))
 
     for i in range(n_params):
-        ax = fig.add_subplot(1, n_params, i + 1, projection="3d")
+        ax = fig.add_subplot(1, n_params + 1, i + 1, projection="3d")
         print("all_params.shape", all_params.shape)
         sc = ax.scatter(projection[:, 0], projection[:, 1], projection[:, 2], c=all_params[:, i], cmap="jet", s=20)
         ax.set_title(f"SVD Projection colored by {params_name[i]}")
@@ -104,10 +143,26 @@ def svd_analysis(folder, finfos):
         nnd = calc_nearest_neighbor_distance(projection, all_params[:, i])
         ax.set_title(f"SVD {params_name[i]} (NND: {nnd:.2f})")
 
+    # Add histogram subplot for all parameters
+    ax_hist = fig.add_subplot(1, n_params + 1, n_params + 1)
+    for i in range(n_params):
+        ax_hist.hist(all_params[:, i], bins=30, alpha=0.6, label=params_name[i], density=True)
+    ax_hist.set_xlabel("Parameter Value")
+    ax_hist.set_ylabel("Density")
+    ax_hist.set_title("Parameter Distributions")
+    ax_hist.legend()
+
+
     plt.tight_layout()
     svd_proj_path = os.path.join(folder, "svd_projection_scatter.png")
     plt.savefig(svd_proj_path, dpi=300)
     plt.show()
+
+    # Save SVD results
+    np.savez_compressed(os.path.join(folder, "svd_results.npz"),
+                       U=U, S=S, Vh=Vh,
+                       q=q, projection=projection,
+                       all_params=all_params, params_name=params_name)
 
     return Vh
 

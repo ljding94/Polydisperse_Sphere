@@ -343,11 +343,12 @@ int main(int argc, char *argv[])
     auto start_time = std::chrono::steady_clock::now();
 
     // Define a q vector (for example, from 0.1 to 15.0 in 3 points on a log scale)
-    int num_q = 100;
+    int num_q = 100; // to include QD=9
     int N_theta = 50;
     int N_phi = 100;
     std::vector<double> q_vec(num_q);
     // double qi = 1e-2;
+    // to make QD go through 9 (minimum point)
     double qi = 3;
     double qf = 13e0;
     for (int k = 0; k < num_q; k++)

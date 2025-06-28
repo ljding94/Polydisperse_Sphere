@@ -104,7 +104,7 @@ def calc_HS_PY_SQ(Q, Reff, eta):
     return SQ_PY
 
 
-def calc_HS_PY_IQ(Qs, eta, sigma, pdType):
+def calc_HS_PY_IQ(Qs, eta, sigma, pdType, beta_correction=True):
     # 1. find all Rs from distribution
     R0 = 0.5  # effective radius
     Rs = gen_Rs_from_distribution(R0, sigma, pdType)
@@ -120,7 +120,10 @@ def calc_HS_PY_IQ(Qs, eta, sigma, pdType):
     SQ_PY = calc_HS_PY_SQ(Qs, Reff, eta)
 
     # find the beta correction
-    beta = mean_FQ**2 / mean_FQ_sq
+    if beta_correction:
+        beta = mean_FQ**2 / mean_FQ_sq
+    else:
+        beta = np.ones_like(Qs)
 
     # 4. calculate effective S(Q)
     SQ_eff = 1 + beta * (SQ_PY - 1)
