@@ -18,14 +18,14 @@ def main():
 
     # 5. distribution of latent space ? needed?
 
-    # 6, RMSE analysis of generative model vs. PY model with and without beta correction
-    plot_gen_vs_PY_RMSE()
+    # 6, MSE analysis of generative model vs. PY model with and without beta correction
+    plot_gen_vs_PY_MSE()
 
     # 7. generative model vs PY model (with and without beta correction) I(Q) plot, illustrative
+    #plot_gen_vs_PY_Iq()
 
     # 8, regressing using generative model
 
-    # 9. ? inference using generative model
 
 
 

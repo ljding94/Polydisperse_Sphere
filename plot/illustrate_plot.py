@@ -98,8 +98,8 @@ def plot_Iq_and_config(tex_lw=240.71031, ppi=72):
         shift*=100
 
     ax2.set_yscale("log")
-    ax2.set_xlabel(r"$QD_0$", fontsize=9, labelpad=0)
-    ax2.set_ylabel(r"$I(QD_0)$", fontsize=9, labelpad=0)
+    ax2.set_xlabel(r"$Q$", fontsize=9, labelpad=0)
+    ax2.set_ylabel(r"$I(Q)$", fontsize=9, labelpad=0)
     ax2.xaxis.set_major_locator(plt.MultipleLocator(4))
     ax2.xaxis.set_minor_locator(plt.MultipleLocator(2))
     ax2.tick_params(axis='both', which='both', direction="in", labelsize=7)
