@@ -7,19 +7,19 @@ import time
 # TODO: need to modify for the Iq analysis
 def main():
     folder = "../data/data_pack"  # for polymer data
-    #folder = "..pd_data" # for neutron
+    #folder = "../pd_data" # for neutron
     ld = 3
     for label in ["L_18_pdType_1", "L_18_pdType_2"]:
         print(f"Processing label: {label}")
 
         if 1:
-            train_and_save_VAE_alone(folder, label, latent_dim=ld, num_epochs=2000)
+            train_and_save_VAE_alone(folder, label, latent_dim=ld, num_epochs=1000)
 
         if 1:
-            train_and_save_generator(folder, label, vae_path=f"{folder}/{label}_vae_state_dict.pt", input_dim=2, latent_dim=ld, num_epochs=500, fine_tune_epochs=200)
+            train_and_save_generator(folder, label, vae_path=f"{folder}/{label}_vae_state_dict.pt", input_dim=2, latent_dim=ld, num_epochs=300, fine_tune_epochs=300)
 
         if 1:
-            train_and_save_inferrer(folder, label, vae_path=f"{folder}/{label}_vae_state_dict.pt", input_dim=2, latent_dim=ld, num_epochs=200, fine_tune_epochs=200)
+            train_and_save_inferrer(folder, label, vae_path=f"{folder}/{label}_vae_state_dict.pt", input_dim=2, latent_dim=ld, num_epochs=300, fine_tune_epochs=200)
 
         visualize_param_in_latent_space(f"{folder}/{label}_vae_state_dict.pt", folder, label, latent_dim=ld, save_path=f"{folder}/{label}_latent_distribution.png")
 

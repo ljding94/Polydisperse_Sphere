@@ -131,13 +131,12 @@ def svd_analysis(folder, finfos, max_nfiles=5000):
     plt.savefig(os.path.join(folder, "singular_values_and_vectors.png"), dpi=300)
     plt.show()
 
-    # Use the first three left singular vectors for projection
-    projection = U[:, :3]
+    projection = np.dot(F, np.transpose(Vh))  # Project data onto the right singular vectors
     n_params = len(params_name)
     fig = plt.figure(figsize=(6 * (n_params + 1), 6))
 
     for i in range(n_params):
-        ax = fig.add_subplot(1, n_params + 1, i + 1, projection="3d")
+        ax = fig.add_subplot(1, n_params, i + 1, projection="3d")
         print("all_params.shape", all_params.shape)
         sc = ax.scatter(projection[:, 0], projection[:, 1], projection[:, 2], c=all_params[:, i], cmap="jet", s=20)
         ax.set_title(f"SVD Projection colored by {params_name[i]}")
@@ -148,19 +147,24 @@ def svd_analysis(folder, finfos, max_nfiles=5000):
         nnd = calc_nearest_neighbor_distance(projection, all_params[:, i])
         ax.set_title(f"SVD {params_name[i]} (NND: {nnd:.2f})")
 
-    # Add histogram subplot for all parameters
-    ax_hist = fig.add_subplot(1, n_params + 1, n_params + 1)
-    for i in range(n_params):
-        ax_hist.hist(all_params[:, i], bins=30, alpha=0.6, label=params_name[i], density=True)
-    ax_hist.set_xlabel("Parameter Value")
-    ax_hist.set_ylabel("Density")
-    ax_hist.set_title("Parameter Distributions")
-    ax_hist.legend()
-
 
     plt.tight_layout()
     svd_proj_path = os.path.join(folder, "svd_projection_scatter.png")
     plt.savefig(svd_proj_path, dpi=300)
+    plt.show()
+
+    # Add parameter distribution histograms
+    fig_hist = plt.figure(figsize=(4 * n_params, 4))
+    for i in range(n_params):
+        ax = fig_hist.add_subplot(1, n_params, i + 1)
+        ax.hist(all_params[:, i], bins=30, alpha=0.7, edgecolor='black')
+        ax.set_xlabel(params_name[i])
+        ax.set_ylabel('Frequency')
+        ax.set_title(f'Distribution of {params_name[i]}')
+        ax.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(folder, "parameter_distributions.png"), dpi=300)
     plt.show()
 
     # Save SVD results

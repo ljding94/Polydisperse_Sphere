@@ -71,7 +71,7 @@ class logIqDataset(Dataset):
 
         print(self.log10Iq.shape, self.q.shape, self.params.shape)
 
-        print(self.log10Iq[0], self.params[0])
+        #print(self.log10Iq[0], self.params[0])
 
     def __len__(self):
         return len(self.log10Iq)
@@ -110,10 +110,10 @@ class Encoder(nn.Module):
         # 1D convolution layers
         self.conv = nn.Sequential(
             nn.Conv1d(1, 30, kernel_size=9, stride=2, padding=4),  # (100,) -> (50,)
-            nn.BatchNorm1d(30),
+            #nn.BatchNorm1d(30),
             nn.ReLU(),
             nn.Conv1d(30, 60, kernel_size=9, stride=2, padding=4),  # (50,) -> (25,)
-            nn.BatchNorm1d(60),
+            #nn.BatchNorm1d(60),
             nn.ReLU(),
         )
         # Calculate flattened size after conv layers
@@ -140,7 +140,7 @@ class Decoder(nn.Module):
         # Transpose convolution layers (reverse of encoder)
         self.deconv = nn.Sequential(
             nn.ConvTranspose1d(60, 30, kernel_size=9, stride=2, padding=4, output_padding=1),  # (25,) -> (50,)
-            nn.BatchNorm1d(30),
+            #nn.BatchNorm1d(30),
             nn.ReLU(),
             nn.ConvTranspose1d(30, 1, kernel_size=9, stride=2, padding=4, output_padding=1),  # (50,) -> (100,)
         )
