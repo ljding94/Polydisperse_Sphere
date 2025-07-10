@@ -98,7 +98,6 @@ train_and_save_inferrer(folder, label, vae_path, output_dim=2)
 - **C++**: Standard library with filesystem support
 - **Python 3.8+**: NumPy, SciPy, Matplotlib
 - **PyTorch**: For neural network models
-- **scikit-learn**: For Gaussian process regression
 
 ### Simulation Requirements
 - **LAMMPS**: Molecular dynamics simulation package
